@@ -444,10 +444,17 @@ const ERA_CFG={
 };
 
 function updateEraUI(cat,minD){
-  if(cat==='habitable'){stableCount++;burnCount=Math.max(0,burnCount-4);frozenCount=Math.max(0,frozenCount-4);}
-  else if(cat==='burning'){burnCount++;stableCount=Math.max(0,stableCount-8);}
-  else if(cat==='frozen'){frozenCount++;stableCount=Math.max(0,stableCount-8);}
-  else{stableCount=Math.max(0,stableCount-4);}
+  if(cat==='habitable'){
+    stableCount++; burnCount=Math.max(0,burnCount-6); frozenCount=Math.max(0,frozenCount-6);
+  } else if(cat==='burning'){
+    burnCount++;   frozenCount=0; stableCount=Math.max(0,stableCount-10);
+  } else if(cat==='frozen'){
+    frozenCount++; burnCount=0;   stableCount=Math.max(0,stableCount-10);
+  } else {
+    stableCount=Math.max(0,stableCount-4); burnCount=Math.max(0,burnCount-6); frozenCount=Math.max(0,frozenCount-6);
+  }
+  /* cap counters so hysteresis is bounded (max ~3s to clear at 60fps) */
+  burnCount=Math.min(burnCount,180); frozenCount=Math.min(frozenCount,180); stableCount=Math.min(stableCount,250);
   if(burnCount>40) eraState='burning';
   else if(frozenCount>40) eraState='frozen';
   else if(stableCount>100) eraState='stable';
