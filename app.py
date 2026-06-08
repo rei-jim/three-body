@@ -270,7 +270,7 @@ function initBodies(){
     const v=0.36*Math.sqrt(G*M_TOTAL/r);
     s.vx=Math.sin(th)*v; s.vy=-Math.cos(th)*v;
   });
-  const A=st[0], rPl=42, vOrb=Math.sqrt(G*mA/rPl);
+  const A=st[0], rPl=68, vOrb=Math.sqrt(G*mA/rPl);
   const planet={
     name:'PLANET', color:'#4DD0E1', glow:'#B3EBF5', r:3.5, m:mPl,
     x:A.x, y:A.y-rPl, vx:A.vx-vOrb, vy:A.vy,
@@ -451,13 +451,14 @@ function updateEraUI(cat,minD){
   } else if(cat==='frozen'){
     frozenCount++; burnCount=0;   stableCount=Math.max(0,stableCount-10);
   } else {
-    stableCount=Math.max(0,stableCount-4); burnCount=Math.max(0,burnCount-6); frozenCount=Math.max(0,frozenCount-6);
+    /* cold — brief cold spells are normal in a real orbit; decay slowly */
+    stableCount=Math.max(0,stableCount-1); burnCount=Math.max(0,burnCount-6); frozenCount=Math.max(0,frozenCount-6);
   }
-  /* cap counters so hysteresis is bounded (max ~3s to clear at 60fps) */
-  burnCount=Math.min(burnCount,180); frozenCount=Math.min(frozenCount,180); stableCount=Math.min(stableCount,250);
+  /* cap counters so hysteresis is bounded */
+  burnCount=Math.min(burnCount,180); frozenCount=Math.min(frozenCount,180); stableCount=Math.min(stableCount,120);
   if(burnCount>40) eraState='burning';
   else if(frozenCount>40) eraState='frozen';
-  else if(stableCount>100) eraState='stable';
+  else if(stableCount>60) eraState='stable';
   else eraState='chaotic';
   const c=ERA_CFG[eraState]||ERA_CFG.chaotic;
   const d=minD.toFixed(0);
