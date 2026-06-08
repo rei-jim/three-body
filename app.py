@@ -2,52 +2,24 @@ import streamlit as st
 import streamlit.components.v1 as components
 
 st.set_page_config(
-    page_title="Trisolaris — Three-Body Problem",
+    page_title="TRISOLARIS.EXE",
     page_icon="☀️",
     layout="wide",
 )
 
 st.markdown("""
 <style>
-  /* Dark full-page background */
   .stApp, [data-testid="stAppViewContainer"], [data-testid="stMain"] {
-    background: #0a0a12 !important;
+    background: #008080 !important;
   }
-  /* Hide Streamlit chrome */
   header[data-testid="stHeader"],
   [data-testid="stToolbar"],
   footer { display: none !important; }
-  /* Remove default padding */
   .block-container {
-    padding: 1.4rem 1.6rem 0 1.6rem !important;
+    padding: 8px 8px 0 8px !important;
     max-width: 100% !important;
   }
-  /* Title row */
-  .title-row {
-    display: flex;
-    align-items: baseline;
-    gap: 14px;
-    margin-bottom: 2px;
-  }
-  .app-title {
-    font-family: 'SF Mono', 'Fira Mono', 'Cascadia Code', monospace;
-    font-size: 22px;
-    font-weight: 600;
-    color: #e8e8f0;
-    letter-spacing: 0.04em;
-  }
-  .app-sub {
-    font-family: 'SF Mono', 'Fira Mono', monospace;
-    font-size: 11px;
-    color: #44445a;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-  }
 </style>
-<div class="title-row">
-  <span class="app-title">Trisolaris</span>
-  <span class="app-sub">Alpha Centauri · gravitational n-body simulation</span>
-</div>
 """, unsafe_allow_html=True)
 
 SIMULATION_HTML = """
@@ -55,156 +27,206 @@ SIMULATION_HTML = """
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
 
-  * { box-sizing: border-box; margin: 0; padding: 0; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
 
-  body {
-    background: #0a0a12;
-    color: #c8c8d8;
-    font-family: 'JetBrains Mono', 'SF Mono', 'Fira Mono', monospace;
-    padding: 0 0 10px 0;
-  }
+body {
+  background: #008080;
+  font-family: Arial, 'MS Sans Serif', sans-serif;
+  font-size: 11px;
+  padding: 4px 6px 6px 6px;
+  color: #000;
+}
 
-  canvas {
-    display: block;
-    width: 100%;
-    border-radius: 12px;
-    background: #020208;
-    box-shadow: 0 0 0 1px rgba(255,255,255,0.04), 0 8px 40px rgba(0,0,0,0.7);
-  }
+/* ── Win95 window ── */
+.w95 {
+  background: #C0C0C0;
+  box-shadow:
+    inset -1px -1px 0 #000000,
+    inset  1px  1px 0 #FFFFFF,
+    inset -2px -2px 0 #808080,
+    inset  2px  2px 0 #DFDFDF;
+  padding: 2px;
+}
 
-  /* ── Era status bar ── */
-  #eraBox {
-    margin-top: 10px;
-    padding: 10px 16px;
-    border-radius: 10px;
-    background: linear-gradient(135deg, #111120 0%, #0d0d1c 100%);
-    border: 1px solid rgba(255,255,255,0.06);
-    border-left: 3px solid #FFC107;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 8px;
-    transition: border-color 0.6s ease;
-  }
-  #eraLeft  { display: flex; align-items: center; gap: 10px; }
-  #eraDot   { width: 7px; height: 7px; border-radius: 50%; background: #FFC107;
-               box-shadow: 0 0 8px #FFC107; flex-shrink: 0; transition: all 0.6s; }
-  #eraLabel { font-size: 12px; font-weight: 500; color: #FFC107; letter-spacing: 0.05em;
-               transition: color 0.6s; }
-  #eraSub   { font-size: 11px; color: #3a3a52; letter-spacing: 0.03em; }
+/* Title bar */
+.titlebar {
+  background: linear-gradient(90deg, #000080 0%, #1084d0 100%);
+  height: 20px;
+  padding: 1px 2px 1px 4px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  user-select: none;
+  margin-bottom: 2px;
+}
+.tb-title {
+  color: #fff;
+  font-weight: bold;
+  font-size: 11px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+}
+.tb-title img, .tb-icon { font-size: 13px; }
+.tb-btns { display: flex; gap: 2px; }
+.tb-btn {
+  width: 16px; height: 14px;
+  background: #C0C0C0; color: #000;
+  border: none; cursor: default; font-size: 9px;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow:
+    inset -1px -1px 0 #000, inset 1px 1px 0 #fff,
+    inset -2px -2px 0 #808080, inset 2px 2px 0 #dfdfdf;
+  font-weight: bold; padding-bottom: 1px;
+}
 
-  /* ── Controls ── */
-  .controls {
-    display: flex;
-    gap: 6px;
-    flex-wrap: wrap;
-    align-items: center;
-    margin-top: 9px;
-  }
+/* ── CRT screen area ── */
+.screen-wrap {
+  position: relative;
+  margin: 0 2px 2px 2px;
+  background: #020208;
+  overflow: hidden;
+  box-shadow: inset 1px 1px 0 #808080, inset -1px -1px 0 #fff;
+}
+/* scanlines */
+.screen-wrap::after {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent 0px, transparent 2px,
+    rgba(0,0,0,0.12) 2px, rgba(0,0,0,0.12) 4px
+  );
+  pointer-events: none;
+  z-index: 2;
+}
+/* vignette */
+.screen-wrap::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+  background: radial-gradient(ellipse at center, transparent 48%, rgba(0,0,0,0.52) 100%);
+  pointer-events: none;
+  z-index: 3;
+}
+canvas { display: block; width: 100%; }
 
-  .ctrl-group {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    background: rgba(255,255,255,0.03);
-    border: 1px solid rgba(255,255,255,0.06);
-    border-radius: 8px;
-    padding: 4px 6px;
-  }
+/* ── Controls ── */
+.ctrl-area {
+  padding: 4px 4px 2px 4px;
+  border-bottom: 1px solid #808080;
+}
+.ctrl-row {
+  display: flex; flex-wrap: wrap;
+  align-items: center; gap: 3px;
+}
+.ctrl-sep { width: 6px; }
+.ctrl-lbl {
+  font-size: 11px; color: #000;
+  white-space: nowrap; padding-right: 2px;
+}
 
-  .ctrl-label {
-    font-size: 10px;
-    color: #33334a;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    padding: 0 4px 0 2px;
-    user-select: none;
-  }
+button {
+  font-family: Arial, 'MS Sans Serif', sans-serif;
+  font-size: 11px;
+  background: #C0C0C0; color: #000;
+  border: none; cursor: pointer;
+  padding: 2px 8px; min-width: 28px;
+  white-space: nowrap; text-align: center;
+  box-shadow:
+    inset -1px -1px 0 #000, inset 1px 1px 0 #fff,
+    inset -2px -2px 0 #808080, inset 2px 2px 0 #dfdfdf;
+}
+button:active {
+  box-shadow:
+    inset 1px 1px 0 #000, inset -1px -1px 0 #fff,
+    inset 2px 2px 0 #808080, inset -2px -2px 0 #dfdfdf;
+  padding: 3px 7px 1px 9px;
+}
+button.act {
+  box-shadow:
+    inset 1px 1px 0 #000, inset -1px -1px 0 #fff,
+    inset 2px 2px 0 #808080, inset -2px -2px 0 #dfdfdf;
+  color: #000080; font-weight: bold;
+}
 
-  button {
-    font-size: 11px;
-    font-family: inherit;
-    padding: 3px 9px;
-    cursor: pointer;
-    background: transparent;
-    color: #5a5a78;
-    border: 1px solid transparent;
-    border-radius: 6px;
-    transition: all 0.15s;
-    letter-spacing: 0.02em;
-  }
-  button:hover { background: rgba(255,255,255,0.06); color: #a0a0c0; }
-  button.act {
-    background: rgba(96, 165, 250, 0.12);
-    color: #60a5fa;
-    border-color: rgba(96, 165, 250, 0.3);
-  }
+/* ── Status bar ── */
+.statusbar {
+  display: flex; gap: 3px;
+  padding: 2px 4px 1px 4px;
+}
+.sp {
+  box-shadow: inset 1px 1px 0 #808080, inset -1px -1px 0 #fff;
+  padding: 0 6px;
+  font-family: 'VT323', monospace; font-size: 15px;
+  color: #000080; background: #C0C0C0;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  line-height: 20px; height: 20px;
+}
+.sp.era  { flex: 1; }
+.sp.dist { flex: 0 0 auto; min-width: 100px; text-align: right; }
 
-  .btn-action {
-    background: rgba(255,255,255,0.04);
-    color: #6a6a88;
-    border: 1px solid rgba(255,255,255,0.08);
-    border-radius: 6px;
-    padding: 3px 11px;
-  }
-  .btn-action:hover { background: rgba(255,255,255,0.08); color: #9090b0; }
-
-  .hint {
-    font-size: 10px;
-    color: #252538;
-    margin-top: 8px;
-    letter-spacing: 0.03em;
-    line-height: 1.6;
-  }
-  .hint span { color: #35354e; }
+.hint {
+  font-size: 10px; color: #555;
+  padding: 1px 4px 0 4px;
+}
 </style>
 </head>
 <body>
 
-<canvas id="c" height="530"></canvas>
+<div class="w95">
 
-<div id="eraBox">
-  <div id="eraLeft">
-    <div id="eraDot"></div>
-    <span id="eraLabel">CHAOTIC ERA — fate uncertain</span>
+  <div class="titlebar">
+    <div class="tb-title">
+      <span class="tb-icon">☀</span>
+      TRISOLARIS.EXE — Alpha Centauri N-Body Simulation
+    </div>
+    <div class="tb-btns">
+      <div class="tb-btn">_</div>
+      <div class="tb-btn">□</div>
+      <div class="tb-btn">✕</div>
+    </div>
   </div>
-  <span id="eraSub">planet drifting · nearest sun: —</span>
+
+  <div class="screen-wrap">
+    <canvas id="c" height="490"></canvas>
+  </div>
+
+  <div class="ctrl-area">
+    <div class="ctrl-row">
+      <span class="ctrl-lbl">Speed:</span>
+      <button class="spd" data-v="1">1x</button>
+      <button class="spd" data-v="2">2x</button>
+      <button class="spd act" data-v="4">4x</button>
+      <button class="spd" data-v="8">8x</button>
+      <button class="spd" data-v="16">16x</button>
+      <button class="spd" data-v="32">32x</button>
+      <div class="ctrl-sep"></div>
+      <span class="ctrl-lbl">Trail:</span>
+      <button class="trl act" data-v="1">Normal</button>
+      <button class="trl" data-v="2.5">Long</button>
+      <button class="trl" data-v="0.3">Short</button>
+      <div class="ctrl-sep"></div>
+      <button id="pauBtn">Pause</button>
+      <button id="rstBtn">Reset</button>
+    </div>
+    <div class="hint">Click a star to nudge it &nbsp;·&nbsp; trail color: orange=scorching · green=habitable · blue=frozen</div>
+  </div>
+
+  <div class="statusbar">
+    <div class="sp era"  id="eraLabel">CHAOTIC ERA — fate uncertain</div>
+    <div class="sp dist" id="eraSub">dist: —</div>
+  </div>
+
 </div>
-
-<div class="controls">
-  <div class="ctrl-group">
-    <span class="ctrl-label">Speed</span>
-    <button class="spd" data-v="1">1×</button>
-    <button class="spd" data-v="2">2×</button>
-    <button class="spd act" data-v="4">4×</button>
-    <button class="spd" data-v="8">8×</button>
-    <button class="spd" data-v="16">16×</button>
-    <button class="spd" data-v="32">32×</button>
-  </div>
-  <div class="ctrl-group">
-    <span class="ctrl-label">Trails</span>
-    <button class="trl act" data-v="1">normal</button>
-    <button class="trl" data-v="2.5">long</button>
-    <button class="trl" data-v="0.3">short</button>
-  </div>
-  <button id="pauBtn" class="btn-action">Pause</button>
-  <button id="rstBtn" class="btn-action">Reset</button>
-</div>
-
-<p class="hint">
-  Trail color: <span>red/orange = scorching</span> · <span>green-blue = habitable</span> · <span>deep blue = frozen</span>
-  &nbsp;·&nbsp; click a star to nudge it
-</p>
 
 <script>
 const canvas = document.getElementById('c');
 const ctx    = canvas.getContext('2d');
-const SH = 530;
+const SH = 490;
 const G=1e5, SOFT=10, DT=0.016, SPF=20;
 const mA=1.1, mB=0.907, mProx=0.1221, mPl=1e-6;
 const M_TOTAL = mA+mB+mProx;
@@ -212,59 +234,53 @@ const M_TOTAL = mA+mB+mProx;
 let speedMul=4, paused=false, trailScale=1;
 let bodies=[], bgStars=[];
 let eraState='chaotic', stableCount=0, burnCount=0, frozenCount=0;
-let particleT=0;
+let particleT=0, flickerVal=0;
 
 const STAR_DEF=[
-  {name:'α Cen A', color:'#FFE47A', glow:'#FFFBE0', r:11, m:mA},
-  {name:'α Cen B', color:'#FF9B40', glow:'#FFE0B0', r: 8, m:mB},
-  {name:'Proxima', color:'#FF3B1A', glow:'#FF9977', r: 5, m:mProx},
+  {name:'A CEN A', color:'#FFE47A', glow:'#FFFBE0', r:11, m:mA},
+  {name:'A CEN B', color:'#FF9B40', glow:'#FFE0B0', r: 8, m:mB},
+  {name:'PROXIMA', color:'#FF3B1A', glow:'#FF9977', r: 5, m:mProx},
 ];
 
 function hr(h){return`${parseInt(h.slice(1,3),16)},${parseInt(h.slice(3,5),16)},${parseInt(h.slice(5,7),16)}`;}
 
 function makeBgStars(){
   bgStars=[];
-  for(let i=0;i<130;i++)
+  for(let i=0;i<120;i++)
     bgStars.push({
       x:Math.random()*canvas.width, y:Math.random()*SH,
-      r:Math.random()*1.2+0.15,
-      a:Math.random()*0.25+0.05,
-      twinkle:Math.random()*Math.PI*2
+      r:Math.random()*1.1+0.15,
+      a:Math.random()*0.22+0.04,
+      tw:Math.random()*Math.PI*2
     });
 }
 
 function initBodies(){
   const W=canvas.width, cx=W/2, cy=SH/2, R0=80;
   const angs=[-Math.PI/2, Math.PI/6+0.12, 5*Math.PI/6-0.08];
-
   let st=STAR_DEF.map((s,i)=>({
     ...s, x:R0*Math.cos(angs[i]), y:R0*Math.sin(angs[i]),
     vx:0, vy:0, trail:[], maxTrail:320
   }));
-
   let cmx=0, cmy=0, M=0;
   st.forEach(s=>{cmx+=s.m*s.x; cmy+=s.m*s.y; M+=s.m;});
   st.forEach(s=>{s.x-=cmx/M; s.y-=cmy/M;});
-
   st.forEach(s=>{
     const r=Math.hypot(s.x,s.y)||1, th=Math.atan2(s.y,s.x);
     const v=0.36*Math.sqrt(G*M_TOTAL/r);
     s.vx=Math.sin(th)*v; s.vy=-Math.cos(th)*v;
   });
-
   const A=st[0], rPl=42, vOrb=Math.sqrt(G*mA/rPl);
   const planet={
-    name:'Planet', color:'#4DD0E1', glow:'#B3EBF5', r:3.5, m:mPl,
+    name:'PLANET', color:'#4DD0E1', glow:'#B3EBF5', r:3.5, m:mPl,
     x:A.x, y:A.y-rPl, vx:A.vx-vOrb, vy:A.vy,
     trail:[], maxTrail:2200
   };
-
   bodies=[...st, planet];
   let px=0, py=0, TM=0;
   bodies.forEach(b=>{px+=b.m*b.vx; py+=b.m*b.vy; TM+=b.m;});
   bodies.forEach(b=>{b.vx-=px/TM; b.vy-=py/TM;});
   bodies.forEach(b=>{b.x+=cx; b.y+=cy; b.rgb=hr(b.color);});
-
   eraState='chaotic'; stableCount=0; burnCount=0; frozenCount=0;
 }
 
@@ -321,62 +337,70 @@ function tempRGB(t){
 
 function pulse(speed,offset){ return 0.5+0.5*Math.sin(particleT*speed+offset); }
 
-function drawBurningOverlay(W){
-  const intensity=0.55+0.2*pulse(2.1,0);
-  ctx.fillStyle=`rgba(200,50,0,${(0.08*intensity).toFixed(3)})`;
-  ctx.fillRect(0,0,W,SH);
-  const t=Math.round(16*intensity);
-  for(let i=0;i<t;i++){
-    const a=(0.055*(1-i/t)*intensity).toFixed(3);
-    ctx.fillStyle=`rgba(255,100,0,${a})`;
-    ctx.fillRect(0,i,W,1); ctx.fillRect(0,SH-1-i,W,1);
-    ctx.fillRect(i,0,1,SH); ctx.fillRect(W-1-i,0,1,SH);
+/* CRT phosphor flicker */
+function drawFlicker(W){
+  flickerVal += (Math.random() - 0.5) * 0.012;
+  flickerVal = Math.max(-0.018, Math.min(0.018, flickerVal));
+  if(Math.abs(flickerVal) > 0.002){
+    ctx.fillStyle = flickerVal > 0
+      ? `rgba(255,255,255,${flickerVal.toFixed(4)})`
+      : `rgba(0,0,0,${(-flickerVal).toFixed(4)})`;
+    ctx.fillRect(0,0,W,SH);
   }
-  ctx.font='500 13px "JetBrains Mono",monospace';
-  ctx.fillStyle=`rgba(255,150,50,${(0.6+0.2*pulse(1.8,1)).toFixed(3)})`;
-  ctx.fillText('SCORCHING — surface temperature lethal',13,22);
-  ctx.font='10px "JetBrains Mono",monospace';
-  ctx.fillStyle=`rgba(255,120,40,${(0.38+0.12*pulse(2.3,2)).toFixed(3)})`;
-  ctx.fillText('civilizations entering dehydrated folded state',13,39);
+  /* occasional horizontal scanline glitch */
+  if(Math.random() < 0.008){
+    const y = Math.random()*SH|0;
+    const h = (Math.random()*3+1)|0;
+    ctx.fillStyle='rgba(255,255,255,0.04)';
+    ctx.fillRect(0,y,W,h);
+  }
+}
+
+function drawBurningOverlay(W){
+  const p=pulse(2.1,0);
+  ctx.fillStyle=`rgba(200,40,0,${(0.07+0.04*p).toFixed(3)})`;
+  ctx.fillRect(0,0,W,SH);
+  const t=Math.round(14*(0.6+0.3*p));
+  for(let i=0;i<t;i++){
+    ctx.fillStyle=`rgba(255,80,0,${(0.05*(1-i/t)).toFixed(3)})`;
+    ctx.fillRect(0,i,W,1); ctx.fillRect(0,SH-1-i,W,1);
+  }
+  ctx.font=`bold 20px 'VT323',monospace`;
+  ctx.fillStyle=`rgba(255,80,0,${(0.9+0.1*p).toFixed(2)})`;
+  ctx.fillText('> WARNING: SURFACE TEMP CRITICAL',12,26);
+  ctx.font=`16px 'VT323',monospace`;
+  ctx.fillStyle=`rgba(255,130,40,${(0.7+0.15*p).toFixed(2)})`;
+  ctx.fillText('> DEHYDRATION PROTOCOL ENGAGED',12,46);
 }
 
 function drawFrozenOverlay(W){
-  const intensity=0.55+0.2*pulse(1.3,0);
-  ctx.fillStyle=`rgba(0,20,100,${(0.10*intensity).toFixed(3)})`;
+  const p=pulse(1.3,0);
+  ctx.fillStyle=`rgba(0,20,110,${(0.08+0.04*p).toFixed(3)})`;
   ctx.fillRect(0,0,W,SH);
-  const t=Math.round(16*intensity);
+  const t=Math.round(14*(0.6+0.3*p));
   for(let i=0;i<t;i++){
-    const a=(0.055*(1-i/t)*intensity).toFixed(3);
-    ctx.fillStyle=`rgba(30,70,210,${a})`;
+    ctx.fillStyle=`rgba(30,80,220,${(0.05*(1-i/t)).toFixed(3)})`;
     ctx.fillRect(0,i,W,1); ctx.fillRect(0,SH-1-i,W,1);
-    ctx.fillRect(i,0,1,SH); ctx.fillRect(W-1-i,0,1,SH);
   }
-  ctx.strokeStyle=`rgba(120,170,255,${(0.14*intensity).toFixed(3)})`;
-  ctx.lineWidth=1;
-  for(let x=20;x<W;x+=40){
-    const h=4+3*Math.sin(x*0.3+particleT*0.4);
-    ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,h);ctx.stroke();
-    ctx.beginPath();ctx.moveTo(x,SH);ctx.lineTo(x,SH-h);ctx.stroke();
-  }
-  ctx.font='500 13px "JetBrains Mono",monospace';
-  ctx.fillStyle=`rgba(90,150,255,${(0.6+0.2*pulse(1.4,1)).toFixed(3)})`;
-  ctx.fillText('FROZEN — surface temperature lethal',13,22);
-  ctx.font='10px "JetBrains Mono",monospace';
-  ctx.fillStyle=`rgba(70,130,255,${(0.38+0.12*pulse(1.9,2)).toFixed(3)})`;
-  ctx.fillText('civilizations entering hibernation state',13,39);
+  ctx.font=`bold 20px 'VT323',monospace`;
+  ctx.fillStyle=`rgba(80,160,255,${(0.9+0.1*p).toFixed(2)})`;
+  ctx.fillText('> WARNING: SUB-ZERO TEMPERATURES',12,26);
+  ctx.font=`16px 'VT323',monospace`;
+  ctx.fillStyle=`rgba(100,180,255,${(0.7+0.15*p).toFixed(2)})`;
+  ctx.fillText('> HIBERNATION PROTOCOL ENGAGED',12,46);
 }
 
 function drawStableOverlay(){
-  ctx.font='500 13px "JetBrains Mono",monospace';
-  ctx.fillStyle='rgba(100,210,110,0.5)';
-  ctx.fillText('STABLE ERA — civilization developing',13,22);
+  ctx.font=`bold 20px 'VT323',monospace`;
+  ctx.fillStyle='rgba(0,220,80,0.55)';
+  ctx.fillText('> STABLE ERA — CIVILIZATION DEVELOPING',12,26);
 }
 
 function drawPlanetEffects(plx,ply,pl,cat,temp){
   const[pr,pg,pbl]=tempRGB(temp);
   if(cat==='burning'){
     const scale=1+0.4*pulse(3,0);
-    for(const[rr,aa] of [[pl.r*7*scale,0.035],[pl.r*5*scale,0.07],[pl.r*3,0.13],[pl.r*1.8,0.22]]){
+    for(const[rr,aa] of [[pl.r*7*scale,0.03],[pl.r*5*scale,0.07],[pl.r*3,0.13],[pl.r*1.8,0.22]]){
       ctx.beginPath();ctx.arc(plx,ply,rr,0,Math.PI*2);
       ctx.fillStyle=`rgba(255,70,0,${aa})`;ctx.fill();
     }
@@ -408,50 +432,34 @@ function drawPlanetEffects(plx,ply,pl,cat,temp){
   }
   ctx.beginPath();ctx.arc(plx,ply,pl.r,0,Math.PI*2);
   ctx.fillStyle=`rgb(${pr},${pg},${pbl})`;ctx.fill();
-  /* subtle specular */
-  ctx.beginPath();ctx.arc(plx-pl.r*.25,ply-pl.r*.25,pl.r*.32,0,Math.PI*2);
-  ctx.fillStyle=`rgba(255,255,255,0.18)`;ctx.fill();
+  ctx.beginPath();ctx.arc(plx-pl.r*.25,ply-pl.r*.25,pl.r*.3,0,Math.PI*2);
+  ctx.fillStyle='rgba(255,255,255,0.18)';ctx.fill();
 }
 
 const ERA_CFG={
-  stable: {bc:'#66BB6A', dot:'#66BB6A', glow:'#66BB6A',
-           lt:'STABLE ERA — civilization developing',
-           st:(d)=>`nearest sun ${d} · conditions nominal`},
-  burning:{bc:'#FF5722', dot:'#FF6040', glow:'#FF4400',
-           lt:'CALAMITY: SCORCHING — dehydrate and fold',
-           st:(d)=>`${d} from sun · civilizations folding into dehydrated state`},
-  frozen: {bc:'#42A5F5', dot:'#60BFFF', glow:'#3090FF',
-           lt:'CALAMITY: ICE AGE — civilizations hibernate',
-           st:(d)=>`${d} from nearest sun · surface temperature lethal`},
-  chaotic:{bc:'#FFC107', dot:'#FFD040', glow:'#FFA000',
-           lt:'CHAOTIC ERA — fate uncertain',
-           st:(d)=>`nearest sun ${d} · fate unpredictable`},
+  stable: {dot:'#00DC50', lt:'STABLE ERA — CIVILIZATION DEVELOPING',   st:d=>`DIST: ${d}`},
+  burning:{dot:'#FF4010', lt:'CALAMITY: SCORCHING — DEHYDRATE AND FOLD',st:d=>`DIST: ${d} [CRITICAL]`},
+  frozen: {dot:'#40A0FF', lt:'CALAMITY: ICE AGE — HIBERNATION',         st:d=>`DIST: ${d} [CRITICAL]`},
+  chaotic:{dot:'#FFB000', lt:'CHAOTIC ERA — FATE UNCERTAIN',             st:d=>`DIST: ${d}`},
 };
 
 function updateEraUI(cat,minD){
-  const box=document.getElementById('eraBox');
-  const dot=document.getElementById('eraDot');
-  const label=document.getElementById('eraLabel');
-  const sub=document.getElementById('eraSub');
-
   if(cat==='habitable'){stableCount++;burnCount=Math.max(0,burnCount-4);frozenCount=Math.max(0,frozenCount-4);}
   else if(cat==='burning'){burnCount++;stableCount=Math.max(0,stableCount-8);}
   else if(cat==='frozen'){frozenCount++;stableCount=Math.max(0,stableCount-8);}
   else{stableCount=Math.max(0,stableCount-4);}
-
   if(burnCount>40) eraState='burning';
   else if(frozenCount>40) eraState='frozen';
   else if(stableCount>100) eraState='stable';
   else eraState='chaotic';
-
   const c=ERA_CFG[eraState]||ERA_CFG.chaotic;
   const d=minD.toFixed(0);
-  box.style.borderColor=c.bc;
-  dot.style.background=c.dot;
-  dot.style.boxShadow=`0 0 8px ${c.glow}`;
-  label.textContent=c.lt;
-  label.style.color=c.bc;
-  sub.textContent=c.st(d);
+  document.getElementById('eraLabel').textContent=c.lt;
+  document.getElementById('eraSub').textContent=c.st(d);
+  /* color the status panels */
+  const colors={stable:'#004400',burning:'#440000',frozen:'#000044',chaotic:'#000080'};
+  document.getElementById('eraLabel').style.color=
+  document.getElementById('eraSub').style.color=colors[eraState]||'#000080';
 }
 
 function draw(){
@@ -459,11 +467,11 @@ function draw(){
   particleT+=0.05*speedMul;
   ctx.fillStyle='#020208'; ctx.fillRect(0,0,W,SH);
 
-  /* twinkling background stars */
+  /* background stars with subtle twinkle */
   for(const s of bgStars){
-    const tw=s.a*(0.7+0.3*Math.sin(particleT*0.4+s.twinkle));
+    const a=s.a*(0.7+0.3*Math.sin(particleT*0.35+s.tw));
     ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,Math.PI*2);
-    ctx.fillStyle=`rgba(255,255,255,${tw.toFixed(3)})`;ctx.fill();
+    ctx.fillStyle=`rgba(255,255,255,${a.toFixed(3)})`;ctx.fill();
   }
 
   const com=sysCoM(), ox=W/2-com.x, oy=SH/2-com.y;
@@ -492,32 +500,32 @@ function draw(){
   /* stars */
   for(let i=0;i<3;i++){
     const b=bodies[i],[bx,by]=toS(b.x,b.y);
-    /* outer glow layers */
     for(const[rr,aa] of [[b.r*9,0.018],[b.r*5,0.06],[b.r*2.5,0.16],[b.r*1.6,0.28]]){
       ctx.beginPath();ctx.arc(bx,by,rr,0,Math.PI*2);
       ctx.fillStyle=`rgba(${b.rgb},${aa})`;ctx.fill();
     }
-    /* core */
     ctx.beginPath();ctx.arc(bx,by,b.r,0,Math.PI*2);ctx.fillStyle=b.color;ctx.fill();
-    /* specular */
     ctx.beginPath();ctx.arc(bx-b.r*.22,by-b.r*.22,b.r*.32,0,Math.PI*2);ctx.fillStyle=b.glow;ctx.fill();
-    /* label */
-    ctx.font='10px "JetBrains Mono",monospace';
-    ctx.fillStyle='rgba(255,255,255,0.38)';
-    ctx.fillText(b.name,bx+b.r+5,by+3.5);
+    ctx.font=`14px 'VT323',monospace`;
+    ctx.fillStyle='rgba(255,255,200,0.55)';
+    ctx.fillText(b.name,bx+b.r+5,by+5);
   }
 
   /* planet */
   const pl=bodies[3],[plx,ply]=toS(pl.x,pl.y);
   const{cat,temp,minD}=pState();
   drawPlanetEffects(plx,ply,pl,cat,temp);
-  ctx.font='9px "JetBrains Mono",monospace';
-  ctx.fillStyle='rgba(255,255,255,0.28)';
-  ctx.fillText('planet',plx+pl.r+3,ply+3.5);
+  ctx.font=`13px 'VT323',monospace`;
+  ctx.fillStyle='rgba(200,240,255,0.45)';
+  ctx.fillText('PLANET',plx+pl.r+3,ply+5);
 
+  /* era overlays */
   if(eraState==='burning') drawBurningOverlay(W);
   else if(eraState==='frozen') drawFrozenOverlay(W);
   else if(eraState==='stable') drawStableOverlay();
+
+  /* CRT phosphor flicker */
+  drawFlicker(W);
 
   updateEraUI(cat,minD);
 }
@@ -527,7 +535,6 @@ function loop(){
   draw(); requestAnimationFrame(loop);
 }
 
-/* controls */
 document.querySelectorAll('.spd').forEach(b=>b.addEventListener('click',()=>{
   speedMul=parseFloat(b.dataset.v);
   document.querySelectorAll('.spd').forEach(x=>x.classList.remove('act')); b.classList.add('act');
@@ -542,7 +549,6 @@ document.getElementById('pauBtn').addEventListener('click',()=>{
   document.getElementById('pauBtn').textContent=paused?'Resume':'Pause';
 });
 
-/* nudge star on click */
 canvas.addEventListener('click',e=>{
   const rect=canvas.getBoundingClientRect();
   const mx=(e.clientX-rect.left)*(canvas.width/rect.width);
@@ -564,6 +570,7 @@ function resize(){
   initBodies();
 }
 window.addEventListener('resize', resize);
+document.fonts.ready.then(()=>{ resize(); });
 resize();
 requestAnimationFrame(loop);
 </script>
@@ -571,4 +578,4 @@ requestAnimationFrame(loop);
 </html>
 """
 
-components.html(SIMULATION_HTML, height=800, scrolling=False)
+components.html(SIMULATION_HTML, height=640, scrolling=False)
